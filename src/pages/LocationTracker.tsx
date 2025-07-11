@@ -4,7 +4,7 @@ import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { MapView } from '@/components/MapView';
 import { WeatherCard } from '@/components/WeatherCard';
-import { ActionButtons } from '@/components/ActionButtons';
+
 import { LocationInfo } from '@/components/LocationInfo';
 import { useToast } from '@/hooks/use-toast';
 
@@ -102,10 +102,6 @@ const LocationTracker = () => {
         onMenuClick={handleMenuClick}
         onSearch={handleSearch}
         currentAddress={currentLocation?.address || "위치를 찾는 중..."}
-      />
-
-      {/* Action Buttons */}
-      <ActionButtons 
         onReportClick={handleReportClick}
         onMissingTimeClick={handleMissingTimeClick}
       />

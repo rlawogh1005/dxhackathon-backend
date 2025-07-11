@@ -10,19 +10,6 @@ interface LocationInfoProps {
 export const LocationInfo = ({ location, address }: LocationInfoProps) => {
   return (
     <>
-      {/* Bottom Labels */}
-      <div className="absolute bottom-32 left-6 right-6 z-20">
-        <div className="flex justify-between space-x-4">
-          <div className="bg-accent/90 backdrop-blur-sm rounded-xl px-6 py-3 shadow-lg">
-            <span className="text-sm font-semibold text-accent-foreground">보호자 위치 보기</span>
-          </div>
-          
-          <div className="bg-accent/90 backdrop-blur-sm rounded-xl px-6 py-3 shadow-lg">
-            <span className="text-sm font-semibold text-accent-foreground">장치 온 오프 상태</span>
-          </div>
-        </div>
-      </div>
-
       {/* Location Card */}
       <div className="absolute bottom-20 right-4 bg-glass/95 backdrop-blur-xl border border-glass-border rounded-2xl p-6 w-96 shadow-xl">
         <div className="flex items-start space-x-3">

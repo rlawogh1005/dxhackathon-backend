@@ -7,9 +7,11 @@ interface HeaderProps {
   onMenuClick: () => void;
   onSearch: (query: string) => void;
   currentAddress: string;
+  onReportClick: () => void;
+  onMissingTimeClick: () => void;
 }
 
-export const Header = ({ onMenuClick, onSearch, currentAddress }: HeaderProps) => {
+export const Header = ({ onMenuClick, onSearch, currentAddress, onReportClick, onMissingTimeClick }: HeaderProps) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -25,7 +27,7 @@ export const Header = ({ onMenuClick, onSearch, currentAddress }: HeaderProps) =
 
   return (
     <div className="absolute top-0 left-0 right-0 z-30 p-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         {/* Left: Menu and Address */}
         <div className="flex items-center space-x-4">
           <Button
@@ -73,6 +75,23 @@ export const Header = ({ onMenuClick, onSearch, currentAddress }: HeaderProps) =
             {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
         </div>
+      </div>
+
+      {/* Action Buttons - moved under address */}
+      <div className="flex justify-center space-x-4">
+        <Button
+          onClick={onReportClick}
+          className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-6 py-3 rounded-xl shadow-lg"
+        >
+          신고기능
+        </Button>
+        
+        <Button
+          onClick={onMissingTimeClick}
+          className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-6 py-3 rounded-xl shadow-lg"
+        >
+          실종시간
+        </Button>
       </div>
     </div>
   );
