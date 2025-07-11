@@ -8,21 +8,19 @@ interface ActionButtonsProps {
 
 export const ActionButtons = ({ onReportClick, onMissingTimeClick }: ActionButtonsProps) => {
   return (
-    <div className="absolute top-20 left-4 right-4 z-20">
-      <div className="flex justify-center space-x-4">
+    <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-20">
+      <div className="flex space-x-4">
         <Button
           onClick={onReportClick}
-          className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium px-8 py-3 rounded-xl"
+          className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-6 py-3 rounded-xl shadow-lg"
         >
-          <AlertTriangle className="h-5 w-5 mr-2" />
           신고기능
         </Button>
         
         <Button
           onClick={onMissingTimeClick}
-          className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium px-8 py-3 rounded-xl"
+          className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-6 py-3 rounded-xl shadow-lg"
         >
-          <Clock className="h-5 w-5 mr-2" />
           실종시간
         </Button>
       </div>
