@@ -1,8 +1,8 @@
 {
   "files": [],
   "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
+    { "path": "./tsconfig.app.json", "composite": true },
+    { "path": "./tsconfig.node.json", "composite": true }
   ],
   "compilerOptions": {
     "baseUrl": ".",
@@ -15,5 +15,6 @@
     "allowJs": true,
     "noUnusedLocals": false,
     "strictNullChecks": false
-  }
+  },
+  "include": ["src", "src/types/**/*.d.ts"]
 }
