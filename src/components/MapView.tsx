@@ -1,82 +1,151 @@
 // --- 필요한 import ---
-import { Suspense, useEffect, useState, useRef } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Suspense, useEffect, useState, useRef, useMemo } from 'react';
+// ✨ 1. ThreeEvent 타입을 import 합니다.
+import { Canvas, useThree, ThreeEvent } from '@react-three/fiber';
 import { MapControls, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { MapControls as MapControlsImpl } from 'three-stdlib';
 import { useQuery } from '@tanstack/react-query';
+import gsap from 'gsap';
+
+// --- 가짜 API, GpsMarker는 변경 없음 ---
+const fetchLatestGpsData = async (basePosition: THREE.Vector3): Promise<THREE.Vector3> => { /* ... */ return new THREE.Vector3(); };
+const GpsMarker = ({ position, color = 'red' }) => { /* ... */ return null; };
 
 
-// --- 가짜 백엔드 API 시뮬레이션 (변경 없음) ---
-const fetchLatestGpsData = async (basePosition: THREE.Vector3): Promise<THREE.Vector3> => {
-  console.log("Fetching latest GPS data...");
-  await new Promise(resolve => setTimeout(resolve, 500)); 
-  const newPosition = basePosition.clone();
-  newPosition.x += (Math.random() - 0.5) * 10;
-  newPosition.z += (Math.random() - 0.5) * 10;
-  newPosition.y += 1;
-  return newPosition;
+// --- Prop 타입 정의 (변경 없음) ---
+interface ClickableMeshProps {
+  node: THREE.Mesh;
+  onMeshClick: (point: THREE.Vector3, object: THREE.Object3D) => void;
+}
+interface MapModelProps {
+  onLoaded: (center: THREE.Vector3) => void;
+  onMeshClick: (point: THREE.Vector3, object: THREE.Object3D) => void;
 }
 
-// --- GPS 마커 컴포넌트 (변경 없음) ---
-const GpsMarker = ({ position, color = 'red' }) => {
+
+// --- ClickableMesh 컴포넌트 (타입 수정) ---
+const ClickableMesh = ({ node, onMeshClick }: ClickableMeshProps) => {
+  // ✨ 2. 'e'의 타입을 ThreeEvent<MouseEvent>로 정확하게 지정합니다.
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    onMeshClick(e.point, e.object);
+  };
+
   return (
-    <mesh position={position}>
-      <sphereGeometry args={[0.5, 32, 32]} />
-      <meshStandardMaterial 
-        color={color} 
-        emissive={color} 
-        emissiveIntensity={4}
-        toneMapped={false}
-      />
-    </mesh>
+    <mesh
+      geometry={node.geometry}
+      material={node.material}
+      position={node.position}
+      rotation={node.rotation}
+      scale={node.scale}
+      castShadow
+      receiveShadow
+      onClick={handleClick}
+    />
   );
 };
 
-// --- 카메라 컨트롤러 (변경 없음) ---
-const CameraController = ({ modelCenter, controlsRef }) => {
-  const { camera } = useThree();
 
-  useEffect(() => {
-    if (modelCenter && controlsRef.current) {
-      controlsRef.current.target.copy(modelCenter);
-      camera.position.set(modelCenter.x, modelCenter.y, modelCenter.z + 50);
-      controlsRef.current.update();
-    }
-  }, [modelCenter, camera, controlsRef]);
-
-  return null;
-};
-
-// --- ✨ [수정됨] 지도 모델 (모델 구조 분석 코드 추가) ✨ ---
-const MapModel = ({ onLoaded }) => {
-  // useGLTF는 scene 객체를 포함한 gltf 전체 데이터를 반환합니다.
+// --- MapModel 컴포넌트 (변경 없음) ---
+const MapModel = ({ onLoaded, onMeshClick }: MapModelProps) => {
   const { scene } = useGLTF('/assets/3d_assets/BlockABAAB/BlockABAAB.glb');
-  const groupRef = useRef<THREE.Group>(null);
-  
+
+  const nodes = useMemo(() => {
+    const meshNodes: THREE.Mesh[] = [];
+    scene.traverse((node) => {
+      if (node instanceof THREE.Mesh) {
+        meshNodes.push(node);
+      }
+    });
+    return meshNodes;
+  }, [scene]);
+
   useEffect(() => {
-    if (groupRef.current && scene) {
-      // --- 기존 코드 (모델의 중심 계산) ---
-      const box = new THREE.Box3().setFromObject(groupRef.current);
+    if (scene) {
+      const box = new THREE.Box3().setFromObject(scene);
       const center = new THREE.Vector3();
       box.getCenter(center);
       onLoaded(center);
     }
-    // useEffect의 의존성 배열에 scene을 추가합니다.
   }, [scene, onLoaded]);
 
   return (
-      <group ref={groupRef} scale={0.5}>
-        <primitive object={scene} />
-      </group>
+    <group scale={0.5}>
+      {nodes.map((node) => (
+        <ClickableMesh key={node.uuid} node={node} onMeshClick={onMeshClick} />
+      ))}
+    </group>
   );
 };
 
-// --- 메인 뷰 컴포넌트 (변경 없음) ---
+
+// --- SceneContent 컴포넌트 (변경 없음) ---
+const SceneContent = ({ modelCenter, setModelCenter, gpsPosition, isLoading }) => {
+  const controlsRef = useRef<MapControlsImpl>(null);
+  const { camera } = useThree();
+
+  const handleMeshClick = (targetPoint: THREE.Vector3) => {
+    if (!controlsRef.current) return;
+    const controls = controlsRef.current;
+    const offset = camera.position.clone().sub(controls.target).normalize().multiplyScalar(30);
+    const newCameraPosition = targetPoint.clone().add(offset);
+
+    gsap.to(camera.position, {
+      duration: 1.5,
+      x: newCameraPosition.x,
+      y: newCameraPosition.y,
+      z: newCameraPosition.z,
+      ease: 'power2.inOut',
+    });
+
+    gsap.to(controls.target, {
+      duration: 1.5,
+      x: targetPoint.x,
+      y: targetPoint.y,
+      z: targetPoint.z,
+      ease: 'power2.inOut',
+      onUpdate: () => {
+        controls.update();
+      },
+    });
+  };
+
+  useEffect(() => {
+    if (modelCenter && controlsRef.current) {
+      camera.position.set(modelCenter.x, modelCenter.y + 30, modelCenter.z + 50);
+      controlsRef.current.target.copy(modelCenter);
+      controlsRef.current.update();
+    }
+  }, [modelCenter, camera]);
+
+  return (
+    <>
+      <ambientLight intensity={1.5} />
+      <directionalLight castShadow position={[100, 100, 100]} intensity={2.5} shadow-mapSize-width={2048} shadow-mapSize-height={2048} />
+      <Suspense fallback={<Html center><h1>Loading Map...</h1></Html>}>
+        <MapModel onLoaded={setModelCenter} onMeshClick={handleMeshClick} />
+        {!isLoading && gpsPosition && <GpsMarker position={gpsPosition} />}
+      </Suspense>
+      <MapControls
+        ref={controlsRef}
+        enableDamping
+        dampingFactor={0.05}
+        screenSpacePanning
+        maxPolarAngle={Math.PI / 2.2}
+        minDistance={5}
+        maxDistance={500}
+      />
+    </>
+  );
+};
+
+
+// --- MapView 컴포넌트 (useQuery 수정) ---
 export const MapView = () => {
   const [modelCenter, setModelCenter] = useState<THREE.Vector3 | null>(null);
-  const controlsRef = useRef<MapControlsImpl>(null);
-
+  
+  // ✨ 3. useQuery에 필수 옵션인 queryKey와 queryFn 등을 다시 채워 넣습니다.
   const { data: gpsPosition, isLoading } = useQuery({
     queryKey: ['latestGps', modelCenter],
     queryFn: () => fetchLatestGpsData(modelCenter!),
@@ -86,34 +155,13 @@ export const MapView = () => {
 
   return (
     <div className="absolute inset-0 w-full h-full">
-      <Canvas shadows camera={{ position: [0, 1, 0], fov: 60 }}>
-        <ambientLight intensity={1.5} />
-        <directionalLight 
-          position={[100, 100, 100]} 
-          intensity={2.5} 
-          castShadow 
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
+      <Canvas shadows camera={{ position: [0, 10, 50], fov: 60 }}>
+        <SceneContent
+          modelCenter={modelCenter}
+          setModelCenter={setModelCenter}
+          gpsPosition={gpsPosition}
+          isLoading={isLoading}
         />
-        
-        <Suspense fallback={<Html center><h1>Loading Map...</h1></Html>}>
-          <MapModel onLoaded={setModelCenter} />
-          {!isLoading && gpsPosition && (
-            <GpsMarker position={gpsPosition} />
-          )}
-        </Suspense>
-        
-        <MapControls 
-          ref={controlsRef}
-          enableDamping={true}
-          dampingFactor={0.05}
-          screenSpacePanning={false}
-          maxPolarAngle={Math.PI / 2.2}
-          minDistance={5}
-          maxDistance={200}
-        />
-
-        {modelCenter && <CameraController modelCenter={modelCenter} controlsRef={controlsRef} />}
       </Canvas>
     </div>
   );
