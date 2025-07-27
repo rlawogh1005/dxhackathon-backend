@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, Search, Sun, Moon } from 'lucide-react';
+import { Menu, Search, Sun, Moon, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -39,9 +39,10 @@ export const Header = ({ onMenuClick, onSearch, currentAddress, onReportClick, o
             <Menu className="h-5 w-5" />
           </Button>
           
-          <div className="bg-glass backdrop-blur-sm border border-glass-border rounded-lg px-4 py-2">
-            <span className="text-sm font-medium text-foreground">
-              📍 {currentAddress}
+          <div className="bg-glass backdrop-blur-sm border border-glass-border rounded-lg px-3 py-2 flex items-center">
+            <Send className="h-4 w-4 mr-2 transform -rotate-45 text-white" />
+            <span className="text-sm font-medium text-white">
+              {currentAddress}
             </span>
           </div>
         </div>
@@ -75,23 +76,6 @@ export const Header = ({ onMenuClick, onSearch, currentAddress, onReportClick, o
             {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
         </div>
-      </div>
-
-      {/* Action Buttons - moved under address */}
-      <div className="flex justify-center space-x-4">
-        <Button
-          onClick={onReportClick}
-          className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-6 py-3 rounded-xl shadow-lg"
-        >
-          신고기능
-        </Button>
-        
-        <Button
-          onClick={onMissingTimeClick}
-          className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-6 py-3 rounded-xl shadow-lg"
-        >
-          실종시간
-        </Button>
       </div>
     </div>
   );
