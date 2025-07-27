@@ -3,16 +3,12 @@ import { Location, WeatherInfo, DeviceInfo } from '@/interfaces/location';
 // Mock service - Google Maps API 대신 사용
 export class LocationService {
   static async getCurrentLocation(): Promise<Location> {
-    // 실제 구현시 Google Maps Geolocation API 사용
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          latitude: 36.5184,
-          longitude: 127.2043,
-          address: "세종특별시 조치원읍 으뜩길 215",
-          distance: "5.3km"
-        });
-      }, 1000);
+    // 테스트를 위해 '서울역'의 가상 GPS 좌표를 반환합니다.
+    return Promise.resolve({
+      latitude: 37.5547, // 서울역 위도
+      longitude: 126.9704, // 서울역 경도
+      address: "가상 위치: 서울역",
+      distance: "0km"
     });
   }
 
