@@ -1,52 +1,40 @@
 import { Location } from '@/interfaces/location';
-import { MapPin } from 'lucide-react';
+import { MapPin, Zap, CircleHelp, Footprints } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface LocationInfoProps {
   location: Location | null;
   address: string;
+  className?: string;
 }
 
-export const LocationInfo = ({ location, address }: LocationInfoProps) => {
+export const LocationInfo = ({ location, address, className }: LocationInfoProps) => {
   return (
-    <>
-      {/* Location Card */}
-      <div className="absolute bottom-20 right-4 bg-glass/95 backdrop-blur-xl border border-glass-border rounded-2xl p-6 w-96 shadow-xl">
-        <div className="flex items-start space-x-3">
-          <MapPin className="h-5 w-5 text-primary mt-1" />
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground mb-2">{address}</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              새부정로 설명하는 UI
-            </p>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="flex items-center space-x-2 text-muted-foreground">
-                <span>⚡</span>
-                <span>장치 배터리 100%</span>
-              </div>
-              <div className="flex items-center space-x-2 text-muted-foreground">
-                <span>📍</span>
-                <span>{location?.distance || '5.3km'}</span>
-              </div>
-              <div className="flex items-center space-x-2 text-muted-foreground">
-                <span>🔗</span>
-                <span>###</span>
-              </div>
-              <div className="flex items-center space-x-2 text-muted-foreground">
-                <span>🕐</span>
-                <span>도보 12 min</span>
-              </div>
-            </div>
+    <div className={`bg-black bg-opacity-25 backdrop-blur-lg border border-white border-opacity-20 rounded-2xl p-4 text-white ${className}`}>
+      <div className="flex justify-between items-center h-full">
+        <div>
+          <h3 className="font-semibold">{address}</h3>
+          <p>|</p>
+          <Button variant="secondary" className="mt-2 h-8 rounded-full bg-gray-700 hover:bg-gray-600 text-white">
+            <MapPin className="h-4 w-4 mr-2" />
+            5.3km
+          </Button>
+        </div>
+        <div className="text-sm space-y-2 text-right">
+          <div className="flex items-center justify-end">
+            <Zap className="h-4 w-4 mr-2" />
+            <span></span>
+          </div>
+          <div className="flex items-center justify-end">
+            <CircleHelp className="h-4 w-4 mr-2" />
+            <span>###</span>
+          </div>
+          <div className="flex items-center justify-end">
+            <Footprints className="h-4 w-4 mr-2" />
+            <span></span>
           </div>
         </div>
       </div>
-
-      {/* Navigation Button */}
-      <div className="absolute bottom-4 right-4">
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-12 py-4 rounded-2xl shadow-xl w-96">
-          안내 시작
-        </Button>
-      </div>
-    </>
+    </div>
   );
 };
