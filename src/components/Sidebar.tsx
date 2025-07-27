@@ -10,9 +10,7 @@ interface SidebarProps {
 
 const menuItems = [
   { id: 'home', title: '홈 화면', icon: Home, path: '/' },
-  { id: 'cards', title: '등록 카드', icon: CreditCard, path: '/cards' },
-  { id: 'markers', title: '표시 아이콘', icon: MapPin, path: '/markers' },
-  { id: 'photos', title: '사진 보관함', icon: Camera, path: '/photos' },
+  { id: 'cards', title: '기록', icon: CreditCard, path: '/cards' },
 ];
 
 const bottomItems = [
