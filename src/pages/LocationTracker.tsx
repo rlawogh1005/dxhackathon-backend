@@ -3,17 +3,15 @@ import { useLocation } from '@/hooks/useLocation';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { MapView } from '@/components/MapView';
-import { WeatherCard } from '@/components/WeatherCard';
-
+import { MissingCard } from '@/components/MissingCard';
 import { LocationInfo } from '@/components/LocationInfo';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 const LocationTracker = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { 
-    currentLocation, 
-    weatherInfo, 
-    deviceInfo, 
+    currentLocation,
     loading, 
     error, 
     searchLocation 
@@ -90,12 +88,12 @@ const LocationTracker = () => {
   return (
     <div className="relative w-full h-screen overflow-hidden bg-background">
       {/* 3D Map Background */}
-      <MapView 
+      {/* <MapView 
         center={{
           lat: currentLocation?.latitude || 36.5184,
           lng: currentLocation?.longitude || 127.2043
         }} 
-      />
+      /> */}
 
       {/* Header Overlay */}
       <Header 
@@ -106,17 +104,25 @@ const LocationTracker = () => {
         onMissingTimeClick={handleMissingTimeClick}
       />
 
-      {/* Weather Card */}
-      <WeatherCard 
-        weatherInfo={weatherInfo}
-        deviceInfo={deviceInfo}
-      />
+      {/* Bottom UI container */}
+      <div className="absolute inset-x-0 bottom-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-stretch justify-between gap-4">
+            <MissingCard 
+                className="flex-shrink-0"
+            />
+            <LocationInfo 
+                location={currentLocation}
+                address={currentLocation?.address || "세종특별시 조치원읍 으뜸길 215"}
+                className="flex-grow"
+            />
+          
+          {/* Navigation Button */}
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-[63px] rounded-2xl flex-shrink-0">
+            안내 시작
+          </Button>
+        </div>
+      </div>
 
-      {/* Location Info */}
-      <LocationInfo 
-        location={currentLocation}
-        address={currentLocation?.address || "세종특별시 조치원읍 으뜩길 215"}
-      />
 
       {/* Sidebar */}
       <Sidebar 
