@@ -11,9 +11,4 @@ export class LocationService {
       distance: "0km"
     });
   }
-
-  static async searchLocation(query: string): Promise<Location[]> {
-    // 실제 구현시 Google Places API 사용
-    return 
-  }
 }
