@@ -16,5 +16,11 @@ export class LocationService {
             console.error("Error fetching current location:", error);
             throw error;
         }
+        // return Promise.resolve({
+        //     latitude: 37.5547, // 서울역 위도
+        //     longitude: 126.9704, // 서울역 경도
+        //     address: "가상 위치: 서울역",
+        //     distance: "0km"
+        // });
     }
 }
