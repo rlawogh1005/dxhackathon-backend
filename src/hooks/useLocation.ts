@@ -4,8 +4,6 @@ import { LocationService } from '@/services/locationService';
 
 export const useLocation = () => {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
-  const [weatherInfo, setWeatherInfo] = useState<WeatherInfo | null>(null);
-  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,12 +11,8 @@ export const useLocation = () => {
     try {
       setLoading(true);
       const location = await LocationService.getCurrentLocation();
-      const weather = await LocationService.getWeatherInfo(location);
-      const device = await LocationService.getDeviceInfo();
       
       setCurrentLocation(location);
-      setWeatherInfo(weather);
-      setDeviceInfo(device);
       setError(null);
     } catch (err) {
       setError('위치 정보를 가져오는데 실패했습니다.');
@@ -44,8 +38,6 @@ export const useLocation = () => {
 
   return {
     currentLocation,
-    weatherInfo,
-    deviceInfo,
     loading,
     error,
     refreshLocation: fetchLocationData,
