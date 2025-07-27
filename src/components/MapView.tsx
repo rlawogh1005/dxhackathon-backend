@@ -5,9 +5,7 @@ import { Canvas, useThree, ThreeEvent } from '@react-three/fiber';
 import { MapControls, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { MapControls as MapControlsImpl } from 'three-stdlib';
-import { useQuery } from '@tanstack/react-query';
 import gsap from 'gsap';
-import { LocationService } from '@/services/locationService';
 
 // --- 모델 파일 목록 ---
 // public/assets/3d_assets/ 폴더에 위치한 GLB 파일들의 이름입니다.
@@ -15,51 +13,6 @@ const modelFiles = [
   'BlockABA', 'BlockABX', 'BlockAYA', 'BlockAYX', 'BlockXBA', 'BlockXBX', 'BlockXYA', 'BlockXYX'
 ];
 const modelPaths = modelFiles.map(name => `/assets/3d_assets/${name}_optimized.glb`);
-
-// --- 기준점 데이터 ---
-// 3D 모델 기준점 A, B
-const modelPointA = new THREE.Vector3(387.49, 0, -174.84);
-const modelPointB = new THREE.Vector3(428.70, 0, -148.57);
-
-// 실제 GPS 기준점 A, B (가상으로 할당)
-const gpsPointA = { lat: 37.5547, lon: 126.9704 }; // 서울역
-const gpsPointB = { lat: 37.5512, lon: 126.9882 }; // 남산타워
-
-
-// --- 좌표 변환 함수 ---
-const convertGpsTo3D = (lat: number, lon: number): THREE.Vector3 => {
-  // GPS 좌표와 3D 모델 좌표 사이의 비율(스케일) 계산
-  const latRatio = (lat - gpsPointA.lat) / (gpsPointB.lat - gpsPointA.lat);
-  const lonRatio = (lon - gpsPointA.lon) / (gpsPointB.lon - gpsPointA.lon);
-
-  // 선형 보간을 사용하여 3D 좌표 계산
-  const x = modelPointA.x + (modelPointB.x - modelPointA.x) * lonRatio;
-  const z = modelPointA.z + (modelPointB.z - modelPointA.z) * latRatio;
-
-  // y값은 일단 0으로 두거나, 주변 지형에 따라 보간할 수 있습니다.
-  // 여기서는 두 기준점의 y값을 사용하지 않으므로, 임의의 적절한 높이(예: -55)로 설정합니다.
-  const y = -55;
-
-  return new THREE.Vector3(x, y, z);
-};
-
-
-// --- 데이터 Fetching 함수 ---
-const fetchLatestGpsData = async (): Promise<THREE.Vector3> => {
-  const location = await LocationService.getCurrentLocation();
-  return convertGpsTo3D(location.latitude, location.longitude);
-};
-
-const GpsMarker = ({ position, color = 'red' }) => {
-  return (
-    // ✨ mesh에서 castShadow와 receiveShadow를 제거합니다.
-    <mesh position={position}>
-      <sphereGeometry args={[0.5, 16, 16]} />
-      <meshStandardMaterial color={color} />
-    </mesh>
-  );
-};
-
 
 // Prop 타입 정의
 interface ClickableMeshProps {
@@ -156,7 +109,7 @@ const MapModel = ({ onLoaded, onMeshClick }: MapModelProps) => {
 };
 
 // --- SceneContent 컴포넌트 ---
-const SceneContent = ({ modelBounds, setModelBounds, gpsPosition, isLoading }) => {
+const SceneContent = ({ modelBounds, setModelBounds }) => {
   const controlsRef = useRef<MapControlsImpl>(null);
   const { camera, controls } = useThree(); // ✨ useThree에서 controls를 직접 가져올 수 있습니다.
 
@@ -234,8 +187,6 @@ const handleMeshClick = (targetPoint: THREE.Vector3) => {
 
       <Suspense fallback={<Html center><h1>Loading Map...</h1></Html>}>
         <MapModel onLoaded={setModelBounds} onMeshClick={handleMeshClick} />
-        {/* ✨ GpsMarker에서도 혹시 모를 그림자 속성을 제거합니다. */}
-        {!isLoading && gpsPosition && <GpsMarker position={gpsPosition} />}
       </Suspense>
 
       <MapControls
@@ -256,12 +207,6 @@ export const MapView = () => {
   // modelCenter 대신 modelBounds(중심점 + 크기) 상태를 사용
   const [modelBounds, setModelBounds] = useState<{ center: THREE.Vector3; size: THREE.Vector3 } | null>(null);
   
-  const { data: gpsPosition, isLoading } = useQuery({
-    queryKey: ['latestGps'],
-    queryFn: fetchLatestGpsData,
-    refetchInterval: 2000,
-  });
-
     return (
     <div className="absolute inset-0 w-full h-full">
       {/* ✨ Canvas에서 shadows prop을 제거합니다. */}
@@ -269,8 +214,6 @@ export const MapView = () => {
         <SceneContent
           modelBounds={modelBounds}
           setModelBounds={setModelBounds}
-          gpsPosition={gpsPosition}
-          isLoading={isLoading}
         />
       </Canvas>
     </div>
