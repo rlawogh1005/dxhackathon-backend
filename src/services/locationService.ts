@@ -2,13 +2,19 @@ import { Location, WeatherInfo, DeviceInfo } from '@/interfaces/location';
 
 // Mock service - Google Maps API 대신 사용
 export class LocationService {
-  static async getCurrentLocation(): Promise<Location> {
-    // 테스트를 위해 '서울역'의 가상 GPS 좌표를 반환합니다.
-    return Promise.resolve({
-      latitude: 37.5547, // 서울역 위도
-      longitude: 126.9704, // 서울역 경도
-      address: "가상 위치: 서울역",
-      distance: "0km"
-    });
-  }
+    private static readonly BASE_URL = "/api/location";
+
+    static async getCurrentLocation(): Promise<Location> {
+        try {
+            const response = await fetch(`${LocationService.BASE_URL}`);
+            if (!response.ok) {
+                throw new Error("Failed to fetch current location");
+            }
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error fetching current location:", error);
+            throw error;
+        }
+    }
 }
