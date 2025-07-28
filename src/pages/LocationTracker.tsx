@@ -88,12 +88,12 @@ const LocationTracker = () => {
   return (
     <div className="relative w-full h-screen overflow-hidden bg-background">
       {/* 3D Map Background */}
-      {/* <MapView 
+      <MapView 
         center={{
           lat: currentLocation?.latitude || 36.5184,
           lng: currentLocation?.longitude || 127.2043
         }} 
-      /> */}
+      />
 
       {/* Header Overlay */}
       <Header 
