@@ -6,6 +6,7 @@ import { MapControls, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { MapControls as MapControlsImpl } from 'three-stdlib';
 import gsap from 'gsap';
+import { Location } from '@/interfaces/location';
 
 // --- 모델 파일 목록 ---
 // public/assets/3d_assets/ 폴더에 위치한 GLB 파일들의 이름입니다.
@@ -109,7 +110,7 @@ const MapModel = ({ onLoaded, onMeshClick }: MapModelProps) => {
 };
 
 // --- SceneContent 컴포넌트 ---
-const SceneContent = ({ modelBounds, setModelBounds }) => {
+const SceneContent = ({ modelBounds, setModelBounds, guardianLocation, oldmanLocation }) => {
   const controlsRef = useRef<MapControlsImpl>(null);
   const { camera, controls } = useThree();
 
@@ -197,6 +198,18 @@ const SceneContent = ({ modelBounds, setModelBounds }) => {
     }
   }, [modelBounds, camera]); // 의존성 배열 유지
 
+  // Function to convert lat/lon to 3D coordinates.
+  // This is a placeholder. You need to replace this with a proper projection based on your map model.
+  const projectTo3D = (lat: number, lon: number) => {
+    // This is a very simple and likely incorrect projection.
+    // You'll need a way to map geographic coordinates to your 3D model's coordinate system.
+    return new THREE.Vector3(lon, 0, -lat); 
+  };
+
+  const guardianPosition = guardianLocation ? projectTo3D(guardianLocation.latitude, guardianLocation.longitude) : null;
+  const oldmanPosition = oldmanLocation ? projectTo3D(oldmanLocation.latitude, oldmanLocation.longitude) : null;
+
+
   return (
     <>
       <ambientLight intensity={1.5} />
@@ -206,6 +219,20 @@ const SceneContent = ({ modelBounds, setModelBounds }) => {
       <Suspense fallback={<Html center><h1>Loading Map...</h1></Html>}>
         <MapModel onLoaded={setModelBounds} onMeshClick={handleMeshClick} />
       </Suspense>
+
+      {guardianPosition && (
+        <mesh position={guardianPosition}>
+          <sphereGeometry args={[0.5, 32, 32]} />
+          <meshStandardMaterial color="blue" />
+        </mesh>
+      )}
+
+      {oldmanPosition && (
+        <mesh position={oldmanPosition}>
+          <sphereGeometry args={[0.5, 32, 32]} />
+          <meshStandardMaterial color="red" />
+        </mesh>
+      )}
 
       <MapControls
         ref={controlsRef}
@@ -242,7 +269,7 @@ const SceneContent = ({ modelBounds, setModelBounds }) => {
 
 
 // --- MapView 컴포넌트 ---
-export const MapView = () => {
+export const MapView = ({ guardianLocation, oldmanLocation }: { guardianLocation: Location | null, oldmanLocation: Location | null }) => {
   // modelCenter 대신 modelBounds(중심점 + 크기) 상태를 사용
   const [modelBounds, setModelBounds] = useState<{ center: THREE.Vector3; size: THREE.Vector3 } | null>(null);
   
@@ -253,6 +280,8 @@ export const MapView = () => {
         <SceneContent
           modelBounds={modelBounds}
           setModelBounds={setModelBounds}
+          guardianLocation={guardianLocation}
+          oldmanLocation={oldmanLocation}
         />
       </Canvas>
     </div>
