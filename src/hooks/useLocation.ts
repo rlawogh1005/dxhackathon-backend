@@ -1,17 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Location, WeatherInfo, DeviceInfo } from '@/interfaces/location';
 import { LocationService } from '@/services/locationService';
 
-export const useLocation = () => {
+export const useLocation = (deviceId: string | null) => {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLocationData = async () => {
+  const fetchLocationData = useCallback(async () => {
+    if (!deviceId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
-      const location = await LocationService.getCurrentLocation();
-      
+      const location = await LocationService.getCurrentLocation(deviceId);
+
       setCurrentLocation(location);
       setError(null);
     } catch (err) {
@@ -20,27 +24,16 @@ export const useLocation = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [deviceId]);
 
   useEffect(() => {
     fetchLocationData();
-  }, []);
-
-  const searchLocation = async (query: string) => {
-    try {
-      const results = await LocationService.searchLocation(query);
-      return results;
-    } catch (err) {
-      console.error('검색 실패:', err);
-      return [];
-    }
-  };
+  }, [fetchLocationData]);
 
   return {
     currentLocation,
     loading,
     error,
     refreshLocation: fetchLocationData,
-    searchLocation
   };
 };
