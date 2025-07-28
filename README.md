@@ -2,8 +2,7 @@
 
 > 치매 노인의 위치를 3D 환경에서 시각적으로 추적하는 실시간 웹 애플리케이션
 
-![Project Demo](https://via.placeholder.com/800x400.png?text=프로젝트+데모+GIF+또는+스크린샷)
-*(여기에 프로젝트 데모 GIF나 스크린샷을 삽입하세요)*
+![image.png](attachment:50257c60-6e4f-4d53-afa5-be49709ded8c:image.png)
 
 ---
 
