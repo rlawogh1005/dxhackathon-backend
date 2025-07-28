@@ -2,11 +2,15 @@
 import { Suspense, useEffect, useState, useRef, useMemo } from 'react';
 // ✨ 1. ThreeEvent 타입을 import 합니다.
 import { Canvas, useThree, ThreeEvent } from '@react-three/fiber';
-import { MapControls, useGLTF, Html } from '@react-three/drei';
+// ✨ 2. Line 컴포넌트를 import 합니다.
+import { MapControls, useGLTF, Html, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { MapControls as MapControlsImpl } from 'three-stdlib';
 import gsap from 'gsap';
 import { Location } from '@/interfaces/location';
+// ✨ 3. three-pathfinding 라이브러리를 import 합니다.
+import { Pathfinding, PathfindingHelper } from 'three-pathfinding';
+
 
 // --- 모델 파일 목록 ---
 // public/assets/3d_assets/ 폴더에 위치한 GLB 파일들의 이름입니다.
@@ -112,10 +116,84 @@ const MapModel = ({ onLoaded, onMeshClick }: MapModelProps) => {
 // --- SceneContent 컴포넌트 ---
 const SceneContent = ({ modelBounds, setModelBounds, guardianLocation, oldmanLocation }) => {
   const controlsRef = useRef<MapControlsImpl>(null);
-  const { camera, controls } = useThree();
+  const { camera, controls, scene } = useThree(); // ✨ scene 객체를 가져옵니다.
+
+  // --- Pathfinding State ---
+  // ✨ 4. Pathfinding 관련 상태를 추가합니다.
+  const [pathfinder] = useState(() => new Pathfinding());
+  const [navMesh, setNavMesh] = useState<THREE.Object3D | null>(null);
+  const [startPoint, setStartPoint] = useState<THREE.Vector3 | null>(null);
+  const [endPoint, setEndPoint] = useState<THREE.Vector3 | null>(null);
+  const [path, setPath] = useState<THREE.Vector3[] | null>(null);
+  const ZONE = 'level'; // NavMesh를 그룹화할 때 사용할 이름
+
+
+  // --- NavMesh 로드 ---
+  // ✨ 5. NavMesh 모델을 로드하고 Pathfinding 라이브러리에 설정합니다.
+  const { scene: navMeshScene } = useGLTF('/assets/3d_assets/navmesh.glb');
+  useEffect(() => {
+    if (navMeshScene) {
+      // NavMesh를 보이지 않게 설정합니다.
+      navMeshScene.traverse((node) => {
+        if ((node as THREE.Mesh).isMesh) {
+            node.visible = false;
+        }
+      });
+      // 로드된 NavMesh로 Pathfinding 라이브러리를 설정합니다.
+      // ✨ [수정] 로드된 scene의 첫 번째 자식이 Mesh임을 명시적으로 타입 캐스팅합니다.
+      pathfinder.setZoneData(ZONE, Pathfinding.createZone((navMeshScene.children[0] as THREE.Mesh).geometry));
+      setNavMesh(navMeshScene);
+      console.log('NavMesh loaded and ready.');
+    }
+  }, [navMeshScene, pathfinder]);
+
 
   const handleMeshClick = (clickedPoint: THREE.Vector3, clickedObject: THREE.Object3D) => {
-    console.log('Clicked Object:', clickedObject.name);
+    // console.log('Clicked Object:', clickedObject.name);
+
+    if (!navMesh) {
+      console.warn('NavMesh not loaded yet!');
+      return;
+    }
+
+    // ✨ 6. 클릭 시 경로 설정 로직을 수정합니다.
+    const closestNode = pathfinder.getClosestNode(clickedPoint, ZONE, 10); // 10은 탐색 반경
+    if (!closestNode) {
+        console.warn('No close node found on NavMesh!');
+        return;
+    }
+    // 가장 가까운 노드의 중심점을 경로 계산에 사용합니다.
+    const targetPoint = new THREE.Vector3().copy(closestNode.centroid);
+
+
+    if (!startPoint) {
+      setStartPoint(targetPoint);
+      setEndPoint(null); // 시작점을 다시 찍으면 도착점과 경로 초기화
+      setPath(null);
+      console.log('Start point set:', targetPoint);
+    } else {
+      setEndPoint(targetPoint);
+      console.log('End point set:', targetPoint);
+
+      // --- 경로 계산 ---
+      // ✨ [수정] startPoint가 null이 아님은 이 코드 블록에서 보장됩니다.
+      const groupID = pathfinder.getGroup(ZONE, startPoint);
+      if (groupID === null) {
+          console.error('Pathfinding error: Start point is not on any NavMesh group.');
+          return;
+      }
+      
+      const calculatedPath = pathfinder.findPath(startPoint, targetPoint, ZONE, groupID);
+      
+      if (calculatedPath && calculatedPath.length > 0) {
+        console.log('Path found:', calculatedPath);
+        setPath(calculatedPath as THREE.Vector3[]);
+      } else {
+        console.warn('No path found!');
+        setPath(null);
+      }
+    }
+
 
     if (controlsRef.current && clickedObject) {
       const controls = controlsRef.current;
@@ -218,7 +296,28 @@ const SceneContent = ({ modelBounds, setModelBounds, guardianLocation, oldmanLoc
 
       <Suspense fallback={<Html center><h1>Loading Map...</h1></Html>}>
         <MapModel onLoaded={setModelBounds} onMeshClick={handleMeshClick} />
+        {/* ✨ 7. NavMesh를 Scene에 추가합니다 (보이지 않음). */}
+        {navMesh && <primitive object={navMesh} />}
       </Suspense>
+
+      {/* --- 경로 및 출발/도착 지점 시각화 --- */}
+      {/* ✨ 8. 계산된 경로를 Line으로 그립니다. */}
+      {path && <Line points={path} color="red" lineWidth={5} />}
+
+      {/* ✨ 9. 출발점과 도착점을 시각적으로 표시합니다. */}
+      {startPoint && (
+        <mesh position={startPoint.clone().add(new THREE.Vector3(0, 0.2, 0))}>
+          <sphereGeometry args={[0.3, 16, 16]} />
+          <meshStandardMaterial color="green" emissive="green" />
+        </mesh>
+      )}
+      {endPoint && (
+        <mesh position={endPoint.clone().add(new THREE.Vector3(0, 0.2, 0))}>
+          <sphereGeometry args={[0.3, 16, 16]} />
+          <meshStandardMaterial color="blue" emissive="blue" />
+        </mesh>
+      )}
+
 
       {guardianPosition && (
         <mesh position={guardianPosition}>
