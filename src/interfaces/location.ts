@@ -18,6 +18,12 @@ export interface DeviceInfo {
   lastUpdate: string;
 }
 
+export interface Device {
+  id: string;
+  name?: string; // 기기 이름 등 추가 속성이 있을 수 있습니다.
+  role: 'guardian' | 'oldman';
+}
+
 export interface ReportData {
   id: string;
   type: 'missing' | 'found' | 'emergency';
