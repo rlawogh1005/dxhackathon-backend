@@ -1,73 +1,74 @@
-# Welcome to your Lovable project
+# SEIZE ON
 
-## Project info
+> 치매 노인의 위치를 3D 환경에서 시각적으로 추적하는 실시간 웹 애플리케이션
 
-**URL**: https://lovable.dev/projects/5a59c17f-90f6-4676-bd94-b3b4c7cd2da9
+![Project Demo](https://via.placeholder.com/800x400.png?text=프로젝트+데모+GIF+또는+스크린샷)
+*(여기에 프로젝트 데모 GIF나 스크린샷을 삽입하세요)*
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 📖 프로젝트 소개 (About)
 
-**Use Lovable**
+**SEIZE ON**은 GPS 장치를 통해 수집된 치매 노인의 위치 데이터를 3D로 구현된 공간에 시각화하여, 보호자가 어르신의 위치를 직관적으로 파악하고 안전을 관리할 수 있도록 돕는 프로젝트입니다. 실제 지형 정보를 담은 3D 모델 위에서 실시간으로 위치를 추적하여 보다 현실감 있고 정확한 정보를 제공하는 것을 목표로 합니다.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5a59c17f-90f6-4676-bd94-b3b4c7cd2da9) and start prompting.
+## ✨ 주요 기능 (Features)
 
-Changes made via Lovable will be committed automatically to this repo.
+*   **🌐 실시간 3D 위치 시각화**: NestJS 백엔드로부터 받은 GPS 데이터를 React와 Three.js를 이용해 3D 맵 위에 실시간으로 렌더링합니다.
+*   **🖱️ 인터랙티브 3D 맵**: 레이캐스팅(Raycasting) 기술을 활용하여 사용자가 3D 맵의 특정 지점을 클릭해 시점을 이동하는 등 상호작용이 가능합니다.
+*   **🗺️ 정확한 위치 매핑**: 지오레퍼런싱(Georeferencing) 기술을 통해 실제 GPS 좌표(WGS84)와 3D 모델의 좌표를 정밀하게 일치시켜 위치 정보의 정확도를 높였습니다.
+*   **🧩 모듈화된 아키텍처**: React 프론트엔드는 유지보수와 확장이 용이하도록 컴포넌트 기반으로 모듈화하여 설계되었습니다.
 
-**Use your preferred IDE**
+## 🛠️ 기술 스택 (Tech Stack)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+| 구분 | 기술 | 설명 |
+| :--- | :--- | :--- |
+| **Frontend** | `React` `Three.js` | UI 구축 및 WebGL 기반 3D 그래픽 렌더링 |
+| **Backend** | `NestJS` | GPS 데이터 수집 및 저장을 위한 API 서버 구축 |
+| **3D Modeling** | `Blender` | 3D 지형 및 건물 모델링 (`.glb` 포맷) |
+| **Georeferencing**| `DJI Terra` | 3D 모델에 실제 지리 좌표(WGS84)를 부여 |
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## ⚙️ 핵심 기술 상세 (Core Technologies)
 
-Follow these steps:
+### 1. 3D 인터랙션: 레이캐스팅 (Raycasting)
+사용자가 3D 공간과 원활하게 상호작용할 수 있도록 Three.js의 **레이캐스팅** 기술을 적용했습니다. 마우스 클릭 위치에서 가상의 광선(Ray)을 발사하여 `.glb` 모델의 메쉬(Mesh)와 교차하는 지점을 계산합니다. 이를 통해 사용자는 맵의 특정 지점으로 부드럽게 시점을 이동시키는 인터랙션을 경험할 수 있습니다.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 2. 지오레퍼런싱 (Georeferencing)
+본 프로젝트의 핵심은 현실의 GPS 좌표를 가상의 3D 공간에 정확히 매핑하는 것입니다.
+- **DJI Terra** 프로그램을 사용하여 3D 모델에 **WGS84** 표준 좌표계를 적용하는 지오레퍼런싱 작업을 수행했습니다.
+- 이로써 `.glb` 모델 자체가 실제 지리 정보를 포함하게 되었고, 백엔드에서 수집된 GPS 데이터를 별도의 복잡한 변환 과정 없이 3D 맵 위에 정확하게 투영할 수 있었습니다.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 3. 시스템 아키텍처
+- **GPS 장치 → NestJS 백엔드**: GPS 장치로부터 위치 데이터를 수집하여 데이터베이스에 저장하고, 실시간 데이터 제공을 위한 API를 구축했습니다.
+- **NestJS 백엔드 ↔ React 프론트엔드**: 프론트엔드는 주기적으로 백엔드 API를 호출하여 최신 GPS 데이터를 가져옵니다.
+- **React 프론트엔드**: 수신된 데이터를 Three.js 씬(Scene)에 업데이트하여 3D 맵 위의 사용자 마커 위치를 갱신합니다.
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🚀 시작하기 (Getting Started)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+### 사전 요구 사항
+- Node.js (v18.x 이상)
+- npm or yarn
 
-**Edit a file directly in GitHub**
+### 설치 및 실행
+1.  **저장소 복제**
+    ```sh
+    git clone https://github.com/your-username/seize-on.git
+    cd seize-on
+    ```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+2.  **백엔드 서버 실행**
+    ```sh
+    cd backend
+    npm install
+    npm run start:dev
+    ```
 
-**Use GitHub Codespaces**
+3.  **프론트엔드 서버 실행**
+    ```sh
+    cd frontend
+    npm install
+    npm start
+    ```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+4.  브라우저에서 `http://localhost:3000`으로 접속하세요.
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/5a59c17f-90f6-4676-bd94-b3b4c7cd2da9) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 📁 프로젝트 구조 (Project Structure)
