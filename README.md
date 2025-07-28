@@ -44,14 +44,13 @@
 ## 🚀 시작하기 (Getting Started)
 
 ### 사전 요구 사항
-- Node.js (v18.x 이상)
-- npm or yarn
+- Node.js
+- npm
 
 ### 설치 및 실행
 1.  **저장소 복제**
     ```sh
-    git clone https://github.com/your-username/seize-on.git
-    cd seize-on
+    git clone 'path'
     ```
 
 2.  **백엔드 서버 실행**
