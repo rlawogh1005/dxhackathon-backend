@@ -25,21 +25,28 @@ const LocationTracker = () => {
         const guardianDevices = devices.filter(d => d.role === 'guardian');
         const oldmanDevices = devices.filter(d => d.role === 'oldman');
 
+        const locationPromises: Promise<Location | null>[] = [];
+
         if (guardianDevices.length > 0) {
           guardianDevices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          const latestGuardianDevice = guardianDevices[0];
-          const guardianLoc = await LocationService.getCurrentLocation(latestGuardianDevice.deviceId);
-          setGuardianLocation(guardianLoc);
+          locationPromises.push(LocationService.getCurrentLocation(guardianDevices[0].deviceId));
+        } else {
+          locationPromises.push(Promise.resolve(null));
         }
 
         if (oldmanDevices.length > 0) {
           oldmanDevices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          const latestOldmanDevice = oldmanDevices[0];
-          const oldmanLoc = await LocationService.getCurrentLocation(latestOldmanDevice.deviceId);
-          setOldmanLocation(oldmanLoc);
+          locationPromises.push(LocationService.getCurrentLocation(oldmanDevices[0].deviceId));
+        } else {
+          locationPromises.push(Promise.resolve(null));
         }
+
+        const [guardianLoc, oldmanLoc] = await Promise.all(locationPromises);
+
+        setGuardianLocation(guardianLoc);
+        setOldmanLocation(oldmanLoc);
         
-        if (guardianDevices.length === 0 && oldmanDevices.length === 0) {
+        if (!guardianLoc && !oldmanLoc && devices.length === 0) {
           setInitializationError("등록된 디바이스가 없습니다.");
         }
 
