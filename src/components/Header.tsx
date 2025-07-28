@@ -5,19 +5,17 @@ import { Input } from '@/components/ui/input';
 
 interface HeaderProps {
   onMenuClick: () => void;
-  onSearch: (query: string) => void;
   currentAddress: string;
   onReportClick: () => void;
   onMissingTimeClick: () => void;
 }
 
-export const Header = ({ onMenuClick, onSearch, currentAddress, onReportClick, onMissingTimeClick }: HeaderProps) => {
+export const Header = ({ onMenuClick, currentAddress, onReportClick, onMissingTimeClick }: HeaderProps) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(searchQuery);
   };
 
   const toggleTheme = () => {
