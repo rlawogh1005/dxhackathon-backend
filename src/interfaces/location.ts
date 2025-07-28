@@ -19,9 +19,12 @@ export interface DeviceInfo {
 }
 
 export interface Device {
-  id: string;
+  id: number;
+  deviceId: string;
   name?: string; // 기기 이름 등 추가 속성이 있을 수 있습니다.
   role: 'guardian' | 'oldman';
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ReportData {
