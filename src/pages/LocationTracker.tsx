@@ -45,7 +45,7 @@ const LocationTracker = () => {
 
         setGuardianLocation(guardianLoc);
         setOldmanLocation(oldmanLoc);
-        
+
         if (!guardianLoc && !oldmanLoc && devices.length === 0) {
           setInitializationError("등록된 디바이스가 없습니다.");
         }
