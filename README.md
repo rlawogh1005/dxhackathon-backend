@@ -38,9 +38,8 @@
 - 이로써 `.glb` 모델 자체가 실제 지리 정보를 포함하게 되었고, 백엔드에서 수집된 GPS 데이터를 별도의 복잡한 변환 과정 없이 3D 맵 위에 정확하게 투영할 수 있었습니다.
 
 ### 3. 시스템 아키텍처
-- **GPS 장치 → NestJS 백엔드**: GPS 장치로부터 위치 데이터를 수집하여 데이터베이스에 저장하고, 실시간 데이터 제공을 위한 API를 구축했습니다.
-- **NestJS 백엔드 ↔ React 프론트엔드**: 프론트엔드는 주기적으로 백엔드 API를 호출하여 최신 GPS 데이터를 가져옵니다.
-- **React 프론트엔드**: 수신된 데이터를 Three.js 씬(Scene)에 업데이트하여 3D 맵 위의 사용자 마커 위치를 갱신합니다.
+<img width="1359" height="853" alt="Group 2085663873" src="https://github.com/user-attachments/assets/8321c95d-0264-46be-a0a3-5d7e7a9e6ad0" />
+
 
 ## 🚀 시작하기 (Getting Started)
 
