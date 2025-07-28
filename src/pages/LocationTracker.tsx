@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from '@/hooks/useLocation';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { MapView } from '@/components/MapView';
@@ -8,46 +7,53 @@ import { LocationInfo } from '@/components/LocationInfo';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { LocationService } from '@/services/locationService';
+import { Location } from '@/interfaces/location';
 
 const LocationTracker = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [deviceId, setDeviceId] = useState<string | null>(null);
-  const [role, setRole] = useState<'guardian' | 'oldman' | null>(null);
   const [initializationError, setInitializationError] = useState<string | null>(null);
+  const [guardianLocation, setGuardianLocation] = useState<Location | null>(null);
+  const [oldmanLocation, setOldmanLocation] = useState<Location | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initializeDeviceId = async () => {
+    const initializeLocations = async () => {
       try {
-        // 기존의 잘못된 deviceId를 삭제합니다.
-        localStorage.removeItem('deviceId');
-        let id = localStorage.getItem('deviceId');
-        if (!id) {
-          console.log("No deviceId in localStorage, fetching from server...");
-          const devices = await LocationService.getAllDevices();
-          if (devices && devices.length > 0) {
-            id = devices[0].id; // 첫 번째 디바이스 ID를 사용
-            localStorage.setItem('deviceId', id);
-            console.log(`Fetched and saved deviceId: ${id}`);
-          } else {
-            setInitializationError("등록된 디바이스가 없습니다. 디바이스를 먼저 등록해주세요.");
-            return;
-          }
+        setLoading(true);
+        const devices = await LocationService.getAllDevices();
+
+        const guardianDevices = devices.filter(d => d.role === 'guardian');
+        const oldmanDevices = devices.filter(d => d.role === 'oldman');
+
+        if (guardianDevices.length > 0) {
+          guardianDevices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          const latestGuardianDevice = guardianDevices[0];
+          const guardianLoc = await LocationService.getCurrentLocation(latestGuardianDevice.deviceId);
+          setGuardianLocation(guardianLoc);
         }
-        setDeviceId(id);
+
+        if (oldmanDevices.length > 0) {
+          oldmanDevices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          const latestOldmanDevice = oldmanDevices[0];
+          const oldmanLoc = await LocationService.getCurrentLocation(latestOldmanDevice.deviceId);
+          setOldmanLocation(oldmanLoc);
+        }
+        
+        if (guardianDevices.length === 0 && oldmanDevices.length === 0) {
+          setInitializationError("등록된 디바이스가 없습니다.");
+        }
+
       } catch (err) {
-        console.error("Failed to initialize deviceId:", err);
-        setInitializationError("디바이스 정보를 초기화하는데 실패했습니다.");
+        console.error("Failed to initialize locations:", err);
+        setInitializationError("위치 정보를 초기화하는데 실패했습니다.");
+      } finally {
+        setLoading(false);
       }
     };
 
-    initializeDeviceId();
+    initializeLocations();
   }, []);
 
-  const { 
-    currentLocation,
-    loading, 
-    error,
-  } = useLocation(deviceId);
   const { toast } = useToast();
 
   const handleMenuClick = () => {
@@ -82,7 +88,7 @@ const LocationTracker = () => {
     );
   }
 
-  if (loading || !deviceId) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -92,32 +98,21 @@ const LocationTracker = () => {
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <p className="text-destructive mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg"
-          >
-            다시 시도
-          </button>
-        </div>
-      </div>
-    );
-  }
+  
+  const currentDisplayLocation = oldmanLocation || guardianLocation;
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-background">
       {/* 3D Map Background */}
-      {/* <MapView /> */}
+      <MapView 
+        guardianLocation={guardianLocation}
+        oldmanLocation={oldmanLocation}
+      />
 
       {/* Header Overlay */}
       <Header 
         onMenuClick={handleMenuClick}
-        currentAddress={currentLocation?.address || "위치를 찾는 중..."}
+        currentAddress={currentDisplayLocation?.address || "위치를 찾는 중..."}
         onReportClick={handleReportClick}
         onMissingTimeClick={handleMissingTimeClick}
       />
@@ -129,8 +124,8 @@ const LocationTracker = () => {
                 className="flex-shrink-0"
             />
             <LocationInfo 
-                location={currentLocation}
-                address={currentLocation?.address || "세종특별시 조치원읍 으뜸길 215"}
+                location={currentDisplayLocation}
+                address={currentDisplayLocation?.address || "세종특별시 조치원읍 으뜸길 215"}
                 className="flex-grow"
             />
           
