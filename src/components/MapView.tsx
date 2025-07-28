@@ -111,43 +111,61 @@ const MapModel = ({ onLoaded, onMeshClick }: MapModelProps) => {
 // --- SceneContent 컴포넌트 ---
 const SceneContent = ({ modelBounds, setModelBounds }) => {
   const controlsRef = useRef<MapControlsImpl>(null);
-  const { camera, controls } = useThree(); // ✨ useThree에서 controls를 직접 가져올 수 있습니다.
+  const { camera, controls } = useThree();
 
-const handleMeshClick = (targetPoint: THREE.Vector3) => {
-    console.log('Clicked 3D coordinates:', targetPoint);
-    if (controlsRef.current) {
-        const controls = controlsRef.current;
-        const offset = camera.position.clone().sub(controls.target).normalize().multiplyScalar(30);
-        const newCameraPosition = targetPoint.clone().add(offset);
+  const handleMeshClick = (clickedPoint: THREE.Vector3, clickedObject: THREE.Object3D) => {
+    console.log('Clicked Object:', clickedObject.name);
 
-        // 1. 카메라 위치를 부드럽게 이동시킵니다. (기존과 동일)
-        gsap.to(camera.position, {
-            duration: 1.5,
-            x: newCameraPosition.x,
-            y: newCameraPosition.y,
-            z: newCameraPosition.z,
-            ease: 'power2.inOut',
-        });
+    if (controlsRef.current && clickedObject) {
+      const controls = controlsRef.current;
+      const objectCenter = new THREE.Vector3();
+      new THREE.Box3().setFromObject(clickedObject).getCenter(objectCenter);
 
-        // 2. 카메라의 '타겟'도 부드럽게 이동시키면서, 완료된 후 타겟을 '확정'합니다.
-        gsap.to(controls.target, {
-            duration: 1.5,
-            x: targetPoint.x,
-            y: targetPoint.y,
-            z: targetPoint.z,
-            ease: 'power2.inOut',
-            onUpdate: () => {
-                // 애니메이션 중간 과정에도 컨트롤을 계속 업데이트합니다.
-                controls.update();
-            },
-            // ✨ [핵심] 애니메이션이 완전히 끝났을 때 실행됩니다.
-            onComplete: () => {
-                // 컨트롤러의 타겟 위치를 클릭한 지점으로 명확하게 재설정하고 확정합니다.
-                controls.target.copy(targetPoint);
-            }
-        });
+      // ✨ [수정] 현재 거리에서 일정 비율(예: 0.5)만큼 가까워지도록 newDistance를 계산합니다.
+      const currentDistance = camera.position.distanceTo(controls.target);
+      const newDistance = currentDistance * 0.2; // 50%만큼 가까이 갑니다. 0.7로 하면 30%만 다가갑니다.
+      
+      const direction = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
+
+      // ✨ 계산된 newDistance를 사용하여 새로운 카메라 위치를 결정합니다.
+      const newCameraPosition = new THREE.Vector3().addVectors(objectCenter, direction.multiplyScalar(newDistance));
+      
+      // ✨ [수정 3] 하나의 GSAP 애니메이션으로 카메라와 타겟을 동시에 제어합니다.
+      // proxy 객체를 만들어 중간 값을 계산하고, onUpdate에서 실제 값에 적용합니다.
+      const proxy = {
+        camX: camera.position.x,
+        camY: camera.position.y,
+        camZ: camera.position.z,
+        targetX: controls.target.x,
+        targetY: controls.target.y,
+        targetZ: controls.target.z,
+      };
+
+      gsap.to(proxy, {
+        duration: 1.5,
+        ease: 'power2.inOut',
+        // 목표 값 설정
+        camX: newCameraPosition.x,
+        camY: newCameraPosition.y,
+        camZ: newCameraPosition.z,
+        targetX: objectCenter.x,
+        targetY: objectCenter.y,
+        targetZ: objectCenter.z,
+        // 애니메이션 매 프레임마다 실행
+        onUpdate: () => {
+          camera.position.set(proxy.camX, proxy.camY, proxy.camZ);
+          controls.target.set(proxy.targetX, proxy.targetY, proxy.targetZ);
+          controls.update(); // 변경된 위치와 타겟을 컨트롤에 즉시 반영
+        },
+        onComplete: () => {
+          // 애니메이션 완료 후 최종 값으로 확정
+          camera.position.copy(newCameraPosition);
+          controls.target.copy(objectCenter);
+          controls.update();
+        }
+      });
     }
-};
+  };
   // 👑 [수정] modelBounds가 설정되면 카메라 위치를 '즉시' 조정합니다.
   useEffect(() => {
     // modelBounds와 controlsRef.current가 모두 준비되었을 때만 실행합니다.
@@ -191,11 +209,32 @@ const handleMeshClick = (targetPoint: THREE.Vector3) => {
 
       <MapControls
         ref={controlsRef}
-        enableDamping
+        enableDamping // 부드러운 움직임 활성화
         dampingFactor={0.05}
-        screenSpacePanning
-        minDistance={5}
-        maxDistance={5000}
+
+        // === 자유로운 조작감을 위한 핵심 속성들 ===
+        
+        // 1. 패닝(카메라 이동) 활성화
+        enablePan={true}
+        screenSpacePanning={true} // true일 때, 화면 기준 상하좌우로 자연스럽게 이동
+
+        // 2. 줌 활성화 (마우스 휠)
+        enableZoom={true}
+
+        // 3. 회전 활성화
+        enableRotate={true}
+        
+        // 4. ✨ 완전한 수직 회전 허용 (가장 중요)
+        minPolarAngle={0} // 0 (정수리에서 보기)
+        maxPolarAngle={Math.PI} // Math.PI (바닥에서 보기)
+
+        // 5. ✨ 마우스 버튼 설정을 제거하여 기본값으로 되돌립니다.
+        // 기본값: LEFT(회전), MIDDLE(줌), RIGHT(패닝)
+          mouseButtons={{
+          LEFT: THREE.MOUSE.ROTATE, // 왼쪽 버튼: 회전
+          MIDDLE: THREE.MOUSE.DOLLY, // 중간 버튼(휠 클릭): 줌
+          RIGHT: THREE.MOUSE.PAN    // 오른쪽 버튼: 평면 이동
+        }}
       />
     </>
   );
